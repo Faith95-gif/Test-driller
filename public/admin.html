@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - JAMB CBT Prep</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar admin-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            <div class="nav-menu">
+                <span id="adminWelcome">Welcome, Admin!</span>
+                <button id="logoutBtn" class="nav-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-menu">
+                <a href="#dashboard" class="sidebar-item active" data-tab="dashboard">
+                    <span class="sidebar-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="#subjects" class="sidebar-item" data-tab="subjects">
+                    <span class="sidebar-icon">📚</span>
+                    Manage Subjects
+                </a>
+                <a href="#questions" class="sidebar-item" data-tab="questions">
+                    <span class="sidebar-icon">❓</span>
+                    Manage Questions
+                </a>
+                <a href="#users" class="sidebar-item" data-tab="users">
+                    <span class="sidebar-icon">👥</span>
+                    Manage Users
+                </a>
+                <a href="#reports" class="sidebar-item" data-tab="reports">
+                    <span class="sidebar-icon">📈</span>
+                    Reports
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="dashboard-header">
+                    <h1>Admin Dashboard</h1>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="activeUsers">0</h3>
+                            <p>Active Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💎</div>
+                        <div class="stat-info">
+                            <h3 id="premiumUsers">0</h3>
+                            <p>Premium Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-info">
+                            <h3 id="totalSubjects">0</h3>
+                            <p>Total Subjects</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❓</div>
+                        <div class="stat-info">
+                            <h3 id="totalQuestions">0</h3>
+                            <p>Total Questions</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <h3 id="totalExams">0</h3>
+                            <p>Exams Taken</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div id="recentActivity" class="activity-list">
+                        <!-- Recent activity will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subjects Tab -->
+            <div id="subjects" class="tab-content">
+                <div class="dashboard-header">
+                    <h1>Manage Subjects</h1>
+                    <button id="addSubjectBtn" class="btn btn-primary">Add New Subject</button>
+                </div>
+                <div id="subjectsTable" class="data-table">
+                    <!-- Subjects table will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Questions Tab -->
+            <div id="questions" class="tab-content">
+                <div class="dashboard-header">
+                    <h1>Manage Questions</h1>
+                    <button id="addQuestionBtn" class="btn btn-primary">Add New Question</button>
+                </div>
+                
+                <!-- Filters -->
+                <div class="filters">
+                    <select id="filterSubject">
+                        <option value="">All Subjects</option>
+                    </select>
+                    <select id="filterYear">
+                        <option value="">All Years</option>
+                    </select>
+                    <button id="applyFilters" class="btn btn-secondary">Apply Filters</button>
+                </div>
+
+                <div id="questionsTable" class="data-table">
+                    <!-- Questions table will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div class="dashboard-header">
+                    <h1>Manage Users</h1>
+                </div>
+                <div id="usersTable" class="data-table">
+                    <!-- Users table will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <div class="dashboard-header">
+                    <h1>Reports & Analytics</h1>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>User Registration Trends</h3>
+                        <p>View user registration statistics over time</p>
+                        <button class="btn btn-secondary">View Report</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>Exam Performance Analytics</h3>
+                        <p>Analyze exam scores and performance metrics</p>
+                        <button class="btn btn-secondary">View Report</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>Subject Popularity</h3>
+                        <p>See which subjects are most popular among students</p>
+                        <button class="btn btn-secondary">View Report</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Subject Modal -->
+    <div id="subjectModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" id="closeSubjectModal">&times;</span>
+            <h2 id="subjectModalTitle">Add New Subject</h2>
+            <form id="subjectForm">
+                <input type="hidden" id="subjectId">
+                <div class="form-group">
+                    <label for="subjectName">Subject Name:</label>
+                    <input type="text" id="subjectName" required>
+                </div>
+                <div class="form-group">
+                    <label for="subjectCode">Subject Code:</label>
+                    <input type="text" id="subjectCode" required>
+                </div>
+                <div class="form-group">
+                    <label for="subjectDescription">Description:</label>
+                    <textarea id="subjectDescription"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Save Subject</button>
+                    <button type="button" id="cancelSubject" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Question Modal -->
+    <div id="questionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" id="closeQuestionModal">&times;</span>
+            <h2 id="questionModalTitle">Add New Question</h2>
+            <form id="questionForm">
+                <input type="hidden" id="questionId">
+                <div class="form-group">
+                    <label for="questionSubject">Subject:</label>
+                    <select id="questionSubject" required>
+                        <option value="">Select Subject</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questionYear">Year:</label>
+                    <input type="number" id="questionYear" min="2010" max="2024" required>
+                </div>
+                <div class="form-group">
+                    <label for="questionTopic">Topic:</label>
+                    <input type="text" id="questionTopic" required>
+                </div>
+                <div class="form-group">
+                    <label for="questionText">Question Text:</label>
+                    <textarea id="questionText" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Options:</label>
+                    <input type="text" id="optionA" placeholder="Option A" required>
+                    <input type="text" id="optionB" placeholder="Option B" required>
+                    <input type="text" id="optionC" placeholder="Option C" required>
+                    <input type="text" id="optionD" placeholder="Option D" required>
+                </div>
+                <div class="form-group">
+                    <label for="correctAnswer">Correct Answer:</label>
+                    <select id="correctAnswer" required>
+                        <option value="">Select Correct Answer</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questionExplanation">Explanation:</label>
+                    <textarea id="questionExplanation"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="questionDifficulty">Difficulty:</label>
+                    <select id="questionDifficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Save Question</button>
+                    <button type="button" id="cancelQuestion" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

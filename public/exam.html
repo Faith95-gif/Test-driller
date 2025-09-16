@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam - JAMB CBT Prep</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="exam-body">
+    <!-- Exam Header -->
+    <header class="exam-header">
+        <div class="exam-header-content">
+            <div class="exam-info">
+                <h1 id="examTitle">JAMB CBT Exam</h1>
+                <div class="exam-details">
+                    <span id="examSubject">Mathematics</span> | 
+                    <span id="examYear">2023</span> | 
+                    <span id="questionCount">40 Questions</span>
+                </div>
+            </div>
+            <div class="exam-timer">
+                <div class="timer-display" id="timer">02:00:00</div>
+                <div class="timer-label">Time Remaining</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Exam Content -->
+    <div class="exam-container">
+        <!-- Question Navigation Sidebar -->
+        <aside class="question-nav">
+            <h3>Questions</h3>
+            <div class="nav-grid" id="questionNavGrid">
+                <!-- Question navigation buttons will be generated here -->
+            </div>
+            <div class="nav-legend">
+                <div class="legend-item">
+                    <div class="legend-color answered"></div>
+                    <span>Answered</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color flagged"></div>
+                    <span>Flagged</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color current"></div>
+                    <span>Current</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color unanswered"></div>
+                    <span>Not Answered</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Question Area -->
+        <main class="question-area">
+            <div class="question-container">
+                <div class="question-header">
+                    <div class="question-number">
+                        Question <span id="currentQuestionNumber">1</span> of <span id="totalQuestions">40</span>
+                    </div>
+                    <button id="flagBtn" class="flag-btn">
+                        <span class="flag-icon">🏳️</span>
+                        Flag Question
+                    </button>
+                </div>
+
+                <div class="question-content">
+                    <div class="question-text" id="questionText">
+                        <!-- Question will be loaded here -->
+                    </div>
+                    
+                    <div class="question-options" id="questionOptions">
+                        <!-- Options will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="question-controls">
+                    <button id="prevBtn" class="btn btn-secondary">Previous</button>
+                    <button id="nextBtn" class="btn btn-primary">Next</button>
+                    <button id="submitExamBtn" class="btn btn-danger" style="display: none;">Submit Exam</button>
+                </div>
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>Loading questions...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Submit Confirmation Modal -->
+    <div id="submitModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Submit Exam?</h2>
+            <p>Are you sure you want to submit your exam? You cannot make changes after submission.</p>
+            <div class="modal-summary">
+                <div>Answered: <span id="answeredCount">0</span></div>
+                <div>Unanswered: <span id="unansweredCount">0</span></div>
+                <div>Flagged: <span id="flaggedCount">0</span></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmSubmit" class="btn btn-danger">Submit Exam</button>
+                <button id="cancelSubmit" class="btn btn-secondary">Continue Exam</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/exam.js"></script>
+</body>
+</html>

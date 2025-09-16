@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results - JAMB CBT Prep</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>JAMB CBT Prep</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <button id="logoutBtn" class="nav-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Results Container -->
+    <div class="results-container">
+        <div class="results-header">
+            <h1>Exam Results</h1>
+            <button id="backBtn" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+
+        <!-- Result Summary -->
+        <div class="result-summary" id="resultSummary">
+            <!-- Will be populated with exam result data -->
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="detailed-results">
+            <h2>Question by Question Analysis</h2>
+            <div id="questionAnalysis" class="question-analysis">
+                <!-- Will be populated with question-by-question results -->
+            </div>
+        </div>
+
+        <!-- Performance Chart -->
+        <div class="performance-section">
+            <h2>Performance Breakdown</h2>
+            <div id="performanceChart" class="chart-container">
+                <!-- Simple text-based performance breakdown -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="result-actions">
+            <a href="dashboard.html" class="btn btn-primary">Take Another Exam</a>
+            <button id="printResults" class="btn btn-secondary">Print Results</button>
+            <button id="shareResults" class="btn btn-secondary">Share Results</button>
+        </div>
+    </div>
+
+    <script src="js/results.js"></script>
+</body>
+</html>
