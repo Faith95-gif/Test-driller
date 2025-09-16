@@ -119,10 +119,10 @@
                 
                 <div class="practice-setup">
                     <div class="form-group">
-                        <label>Select Subject:</label>
-                        <select id="practiceSubject">
-                            <option value="">Choose a subject...</option>
-                        </select>
+                        <label>Select Subjects:</label>
+                        <div id="practiceSubjects" class="multi-select-container">
+                            <!-- Will be populated with checkboxes -->
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Select Year:</label>
@@ -144,6 +144,16 @@
                             <option value="30">30 Questions</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Time Limit (minutes):</label>
+                        <select id="practiceTime">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>60 minutes</option>
+                            <option value="90">90 minutes</option>
+                            <option value="120">120 minutes</option>
+                            <option value="0">No time limit</option>
+                        </select>
+                    </div>
                     <button id="startPracticeBtn" class="btn btn-primary">Start Practice</button>
                 </div>
             </div>
@@ -157,10 +167,10 @@
                 
                 <div class="exam-setup">
                     <div class="form-group">
-                        <label>Select Subject:</label>
-                        <select id="examSubject">
-                            <option value="">Choose a subject...</option>
-                        </select>
+                        <label>Select Subjects:</label>
+                        <div id="examSubjects" class="multi-select-container">
+                            <!-- Will be populated with checkboxes -->
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Select Year:</label>
@@ -168,15 +178,25 @@
                             <option value="">Choose a year...</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Time Limit (minutes):</label>
+                        <select id="examTime">
+                            <option value="60">60 minutes</option>
+                            <option value="90">90 minutes</option>
+                            <option value="120" selected>120 minutes</option>
+                            <option value="150">150 minutes</option>
+                            <option value="180">180 minutes</option>
+                        </select>
+                    </div>
                     <div class="exam-info">
                         <div class="info-item">
-                            <strong>Duration:</strong> 120 minutes (2 hours)
+                            <strong>Duration:</strong> Customizable (60-180 minutes)
                         </div>
                         <div class="info-item">
                             <strong>Questions:</strong> 40 questions
                         </div>
                         <div class="info-item">
-                            <strong>Type:</strong> Multiple choice
+                            <strong>Type:</strong> Multiple choice, Multiple subjects
                         </div>
                     </div>
                     <button id="startExamBtn" class="btn btn-primary">Start Exam</button>

@@ -38,7 +38,7 @@ function loadExamData() {
     
     if (!examData) {
         alert('No exam data found. Redirecting to dashboard...');
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard.html';
         return;
     }
     
@@ -47,10 +47,14 @@ function loadExamData() {
     document.getElementById('examYear').textContent = examData.year;
     document.getElementById('questionCount').textContent = `${examData.questionCount || 40} Questions`;
     
-    // Set timer based on exam type
-    if (examData.type === 'practice') {
-        timeRemaining = 3600; // 1 hour for practice
+    // Set timer based on exam type and user selection
+    if (examData.timeLimit && examData.timeLimit > 0) {
+        timeRemaining = examData.timeLimit;
+    } else if (examData.type === 'practice') {
+        timeRemaining = 3600; // Default 1 hour for practice
         document.querySelector('.timer-label').textContent = 'Practice Timer';
+    } else {
+        timeRemaining = 7200; // Default 2 hours for exam
     }
 }
 
@@ -61,11 +65,24 @@ async function initializeExam() {
         
         // Load questions
         const token = localStorage.getItem('token');
-        const endpoint = examData.type === 'practice' 
-            ? `/api/questions/practice/${examData.subjectId}/${examData.year}`
-            : `/api/questions/${examData.subjectId}/${examData.year}`;
         
+        let endpoint;
         const params = new URLSearchParams();
+        
+        // Handle multiple subjects
+        if (examData.subjects && examData.subjects.length > 0) {
+            const subjectsParam = examData.subjects.join(',');
+            endpoint = examData.type === 'practice' 
+                ? `/api/questions/practice/multiple/${examData.year}`
+                : `/api/questions/multiple/${examData.year}`;
+            params.append('subjects', subjectsParam);
+        } else {
+            // Backward compatibility for single subject
+            endpoint = examData.type === 'practice' 
+                ? `/api/questions/practice/${examData.subjectId}/${examData.year}`
+                : `/api/questions/${examData.subjectId}/${examData.year}`;
+        }
+        
         params.append('limit', examData.questionCount || 40);
         if (examData.topic) {
             params.append('topic', examData.topic);
@@ -83,12 +100,17 @@ async function initializeExam() {
             
             if (questions.length === 0) {
                 alert('No questions found for the selected criteria.');
-                window.location.href = '/dashboard';
+                window.location.href = '/dashboard.html';
                 return;
             }
             
             // Update exam info
-            document.getElementById('examSubject').textContent = questions[0].subject.name;
+            if (examData.subjects && examData.subjects.length > 1) {
+                const uniqueSubjects = [...new Set(questions.map(q => q.subject.name))];
+                document.getElementById('examSubject').textContent = uniqueSubjects.join(', ');
+            } else {
+                document.getElementById('examSubject').textContent = questions[0].subject.name;
+            }
             document.getElementById('totalQuestions').textContent = questions.length;
             
             // Initialize answers object
@@ -114,7 +136,7 @@ async function initializeExam() {
     } catch (error) {
         console.error('Error initializing exam:', error);
         alert('Error loading exam. Please try again.');
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard.html';
     }
 }
 
@@ -361,7 +383,8 @@ async function submitExam() {
         }
         
         // Prepare submission data
-        const timeUsed = (examData.type === 'practice' ? 3600 : 7200) - timeRemaining;
+        const originalTimeLimit = examData.timeLimit || (examData.type === 'practice' ? 3600 : 7200);
+        const timeUsed = originalTimeLimit - timeRemaining;
         const submissionAnswers = [];
         
         Object.entries(answers).forEach(([index, selectedAnswer]) => {
@@ -375,7 +398,7 @@ async function submitExam() {
         });
         
         const submissionData = {
-            subject: examData.subjectId,
+            subjects: examData.subjects || [examData.subjectId], // Handle both formats
             examType: examData.type,
             year: parseInt(examData.year),
             answers: submissionAnswers,
@@ -400,7 +423,7 @@ async function submitExam() {
             localStorage.setItem('resultId', result.result.id);
             localStorage.removeItem('examData'); // Clean up
             
-            window.location.href = '/results';
+            window.location.href = '/results.html';
         } else {
             const error = await response.json();
             throw new Error(error.message || 'Submission failed');

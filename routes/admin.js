@@ -292,4 +292,94 @@ router.get('/stats', adminAuth, async (req, res) => {
     }
 });
 
+// Get reports data
+router.get('/reports', adminAuth, async (req, res) => {
+    try {
+        // User registration trends (last 12 months)
+        const userTrends = await User.aggregate([
+            {
+                $match: {
+                    role: 'student',
+                    createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // Exam performance analytics
+        const examPerformance = await ExamResult.aggregate([
+            {
+                $group: {
+                    _id: '$subject',
+                    avgScore: { $avg: '$score' },
+                    totalExams: { $sum: 1 },
+                    passRate: {
+                        $avg: {
+                            $cond: [{ $gte: ['$score', 50] }, 1, 0]
+                        }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'subjects',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'subjectInfo'
+                }
+            },
+            {
+                $project: {
+                    subjectName: { $arrayElemAt: ['$subjectInfo.name', 0] },
+                    avgScore: { $round: ['$avgScore', 1] },
+                    totalExams: 1,
+                    passRate: { $round: [{ $multiply: ['$passRate', 100] }, 1] }
+                }
+        // Subject popularity
+        const subjectPopularity = await ExamResult.aggregate([
+            {
+                $group: {
+                    _id: '$subject',
+                    examCount: { $sum: 1 },
+                    uniqueUsers: { $addToSet: '$user' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'subjects',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'subjectInfo'
+                }
+            },
+            {
+                $project: {
+                    subjectName: { $arrayElemAt: ['$subjectInfo.name', 0] },
+                    examCount: 1,
+                    uniqueUsers: { $size: '$uniqueUsers' }
+                }
+            },
+            { $sort: { examCount: -1 } }
+        ]);
+            }
+        res.json({
+            userTrends,
+            examPerformance,
+            subjectPopularity
+        });
+    } catch (error) {
+        console.error('Get reports error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+        ]);
 module.exports = router;

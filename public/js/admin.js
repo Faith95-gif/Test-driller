@@ -25,14 +25,14 @@ function checkAuth() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     if (!token || !user.id) {
-        window.location.href = '/login';
+        window.location.href = '/login.html';
         return;
     }
     
     // Check if user is admin
     if (user.role !== 'admin') {
         alert('Access denied. Admin privileges required.');
-        window.location.href = '/dashboard';
+        window.location.href = '/dashboard.html';
         return;
     }
     
@@ -65,7 +65,7 @@ function setupEventListeners() {
         logoutBtn.addEventListener('click', function() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         });
     }
     
@@ -100,6 +100,28 @@ function setupEventListeners() {
     const applyFiltersBtn = document.getElementById('applyFilters');
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', applyQuestionFilters);
+    }
+
+    // Year filter setup
+    setupYearFilter();
+}
+
+function setupYearFilter() {
+    const filterYear = document.getElementById('filterYear');
+    if (filterYear) {
+        const currentYear = new Date().getFullYear();
+        let yearOptions = '<option value="">All Years</option>';
+        for (let year = currentYear; year >= 2010; year--) {
+            yearOptions += `<option value="${year}">${year}</option>`;
+        }
+        filterYear.innerHTML = yearOptions;
+    }
+
+    const questionYear = document.getElementById('questionYear');
+    if (questionYear) {
+        const currentYear = new Date().getFullYear();
+        questionYear.max = currentYear;
+        questionYear.value = currentYear;
     }
 }
 
@@ -175,6 +197,9 @@ function switchTab(tabName) {
         case 'users':
             loadUsers();
             break;
+        case 'reports':
+            loadReports();
+            break;
     }
 }
 
@@ -196,15 +221,24 @@ async function loadDashboardStats() {
             const data = await response.json();
             
             // Update stats
-            document.getElementById('totalUsers').textContent = data.totalUsers;
-            document.getElementById('activeUsers').textContent = data.activeUsers;
-            document.getElementById('premiumUsers').textContent = data.premiumUsers;
-            document.getElementById('totalSubjects').textContent = data.totalSubjects;
-            document.getElementById('totalQuestions').textContent = data.totalQuestions;
-            document.getElementById('totalExams').textContent = data.totalExams;
+            document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+            document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+            document.getElementById('premiumUsers').textContent = data.premiumUsers || 0;
+            document.getElementById('totalSubjects').textContent = data.totalSubjects || 0;
+            document.getElementById('totalQuestions').textContent = data.totalQuestions || 0;
+            document.getElementById('totalExams').textContent = data.totalExams || 0;
             
             // Load recent activity
             loadRecentActivity(data.recentUsers, data.recentExams);
+        } else {
+            console.error('Failed to load dashboard stats');
+            // Set default values
+            document.getElementById('totalUsers').textContent = '0';
+            document.getElementById('activeUsers').textContent = '0';
+            document.getElementById('premiumUsers').textContent = '0';
+            document.getElementById('totalSubjects').textContent = '0';
+            document.getElementById('totalQuestions').textContent = '0';
+            document.getElementById('totalExams').textContent = '0';
         }
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
@@ -214,30 +248,30 @@ async function loadDashboardStats() {
 function loadRecentActivity(recentUsers, recentExams) {
     const activityContainer = document.getElementById('recentActivity');
     
-    let activityHTML = '<h3>Recent Users</h3>';
+    let activityHTML = '';
     
     if (recentUsers && recentUsers.length > 0) {
+        activityHTML += '<h3>Recent Users</h3>';
         activityHTML += recentUsers.map(user => `
             <div class="activity-item">
                 <strong>${user.fullName}</strong> registered
                 <span class="activity-time">${new Date(user.createdAt).toLocaleDateString()}</span>
             </div>
         `).join('');
-    } else {
-        activityHTML += '<p>No recent user registrations</p>';
     }
     
-    activityHTML += '<h3>Recent Exams</h3>';
-    
     if (recentExams && recentExams.length > 0) {
+        activityHTML += '<h3>Recent Exams</h3>';
         activityHTML += recentExams.map(exam => `
             <div class="activity-item">
                 <strong>${exam.user.fullName}</strong> took ${exam.subject.name} exam (${exam.score}%)
                 <span class="activity-time">${new Date(exam.completedAt).toLocaleDateString()}</span>
             </div>
         `).join('');
-    } else {
-        activityHTML += '<p>No recent exam activity</p>';
+    }
+    
+    if (!activityHTML) {
+        activityHTML = '<p>No recent activity</p>';
     }
     
     activityContainer.innerHTML = activityHTML;
@@ -254,7 +288,7 @@ async function loadSubjects() {
         
         if (response.ok) {
             const data = await response.json();
-            subjects = data.subjects;
+            subjects = data.subjects || [];
             
             if (currentTab === 'subjects') {
                 displaySubjectsTable();
@@ -262,9 +296,13 @@ async function loadSubjects() {
             
             // Update dropdowns
             updateSubjectDropdowns();
+        } else {
+            console.error('Failed to load subjects');
+            subjects = [];
         }
     } catch (error) {
         console.error('Error loading subjects:', error);
+        subjects = [];
     }
 }
 
@@ -346,11 +384,17 @@ async function loadQuestions(filters = {}) {
         
         if (response.ok) {
             const data = await response.json();
-            questions = data.questions;
+            questions = data.questions || [];
+            displayQuestionsTable();
+        } else {
+            console.error('Failed to load questions');
+            questions = [];
             displayQuestionsTable();
         }
     } catch (error) {
         console.error('Error loading questions:', error);
+        questions = [];
+        displayQuestionsTable();
     }
 }
 
@@ -379,7 +423,7 @@ function displayQuestionsTable() {
                 ${questions.map(question => `
                     <tr>
                         <td class="question-text">${question.questionText.substring(0, 100)}...</td>
-                        <td>${question.subject.name}</td>
+                        <td>${question.subject ? question.subject.name : 'Unknown'}</td>
                         <td>${question.year}</td>
                         <td>${question.topic}</td>
                         <td>
@@ -414,11 +458,17 @@ async function loadUsers() {
         
         if (response.ok) {
             const data = await response.json();
-            users = data.users;
+            users = data.users || [];
+            displayUsersTable();
+        } else {
+            console.error('Failed to load users');
+            users = [];
             displayUsersTable();
         }
     } catch (error) {
         console.error('Error loading users:', error);
+        users = [];
+        displayUsersTable();
     }
 }
 
@@ -473,6 +523,31 @@ function displayUsersTable() {
     `;
 }
 
+async function loadReports() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/reports', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayReports(data);
+        } else {
+            console.error('Failed to load reports');
+        }
+    } catch (error) {
+        console.error('Error loading reports:', error);
+    }
+}
+
+function displayReports(data) {
+    // This would display actual report data
+    console.log('Reports loaded:', data);
+}
+
 // Modal Functions
 function showSubjectModal(subjectId = null) {
     const modal = document.getElementById('subjectModal');
@@ -516,14 +591,17 @@ function showQuestionModal(questionId = null) {
         const question = questions.find(q => q._id === questionId);
         if (question) {
             document.getElementById('questionId').value = question._id;
-            document.getElementById('questionSubject').value = question.subject._id;
+            document.getElementById('questionSubject').value = question.subject._id || question.subject;
             document.getElementById('questionYear').value = question.year;
             document.getElementById('questionTopic').value = question.topic;
             document.getElementById('questionText').value = question.questionText;
             
             // Load options
             question.options.forEach(option => {
-                document.getElementById(`option${option.label}`).value = option.text;
+                const optionInput = document.getElementById(`option${option.label}`);
+                if (optionInput) {
+                    optionInput.value = option.text;
+                }
             });
             
             document.getElementById('correctAnswer').value = question.correctAnswer;
@@ -550,12 +628,12 @@ async function handleSubjectSubmit(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
-    const subjectId = formData.get('subjectId') || '';
+    const subjectId = document.getElementById('subjectId').value;
     
     const subjectData = {
-        name: formData.get('subjectName'),
-        code: formData.get('subjectCode'),
-        description: formData.get('subjectDescription')
+        name: document.getElementById('subjectName').value,
+        code: document.getElementById('subjectCode').value,
+        description: document.getElementById('subjectDescription').value
     };
     
     try {
@@ -590,23 +668,22 @@ async function handleSubjectSubmit(e) {
 async function handleQuestionSubmit(e) {
     e.preventDefault();
     
-    const formData = new FormData(e.target);
-    const questionId = formData.get('questionId') || '';
+    const questionId = document.getElementById('questionId').value;
     
     const questionData = {
-        subject: formData.get('questionSubject'),
-        year: parseInt(formData.get('questionYear')),
-        topic: formData.get('questionTopic'),
-        questionText: formData.get('questionText'),
+        subject: document.getElementById('questionSubject').value,
+        year: parseInt(document.getElementById('questionYear').value),
+        topic: document.getElementById('questionTopic').value,
+        questionText: document.getElementById('questionText').value,
         options: [
-            { label: 'A', text: formData.get('optionA') },
-            { label: 'B', text: formData.get('optionB') },
-            { label: 'C', text: formData.get('optionC') },
-            { label: 'D', text: formData.get('optionD') }
+            { label: 'A', text: document.getElementById('optionA').value },
+            { label: 'B', text: document.getElementById('optionB').value },
+            { label: 'C', text: document.getElementById('optionC').value },
+            { label: 'D', text: document.getElementById('optionD').value }
         ],
-        correctAnswer: formData.get('correctAnswer'),
-        explanation: formData.get('questionExplanation'),
-        difficulty: formData.get('questionDifficulty')
+        correctAnswer: document.getElementById('correctAnswer').value,
+        explanation: document.getElementById('questionExplanation').value,
+        difficulty: document.getElementById('questionDifficulty').value
     };
     
     try {
@@ -765,52 +842,5 @@ function applyQuestionFilters() {
     
     loadQuestions({ subject, year });
 }
-
-// Add CSS for admin styles
-const adminStyles = `
-    <style>
-        .btn-small {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.8rem;
-            margin: 0 0.25rem;
-        }
-        
-        .status.active { color: #10b981; font-weight: 600; }
-        .status.inactive { color: #ef4444; font-weight: 600; }
-        
-        .subscription.premium { color: #8b5cf6; font-weight: 600; }
-        .subscription.free { color: #6b7280; }
-        
-        .difficulty.easy { color: #10b981; }
-        .difficulty.medium { color: #f59e0b; }
-        .difficulty.hard { color: #ef4444; }
-        
-        .question-text { 
-            max-width: 300px; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
-        }
-        
-        .actions {
-            white-space: nowrap;
-        }
-        
-        .activity-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .activity-time {
-            color: #6b7280;
-            font-size: 0.8rem;
-        }
-    </style>
-`;
-
-document.head.insertAdjacentHTML('beforeend', adminStyles);
 
 console.log('Admin JS loaded successfully');

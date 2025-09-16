@@ -23,13 +23,13 @@ function checkAuth() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     if (!token || !user.id) {
-        window.location.href = '/login';
+        window.location.href = '/login.html';
         return;
     }
     
     // Redirect admin users
     if (user.role === 'admin') {
-        window.location.href = '/admin';
+        window.location.href = '/admin.html';
         return;
     }
     
@@ -52,7 +52,6 @@ function checkAuth() {
 function initializeDashboard() {
     // Set up tab navigation
     const sidebarItems = document.querySelectorAll('.sidebar-item');
-    const tabContents = document.querySelectorAll('.tab-content');
     
     sidebarItems.forEach(item => {
         item.addEventListener('click', function(e) {
@@ -128,6 +127,72 @@ function setupEventListeners() {
     if (activateBtn) {
         activateBtn.addEventListener('click', activateAccount);
     }
+
+    // Setup multi-select functionality
+    setupMultiSelect();
+    setupTimeSelector();
+}
+
+function setupMultiSelect() {
+    // Convert single selects to multi-select for subjects
+    const practiceSubjectContainer = document.querySelector('#practice .form-group:first-child');
+    const examSubjectContainer = document.querySelector('#exam .form-group:first-child');
+    
+    if (practiceSubjectContainer) {
+        practiceSubjectContainer.innerHTML = `
+            <label>Select Subjects:</label>
+            <div id="practiceSubjects" class="multi-select-container">
+                <!-- Will be populated with checkboxes -->
+            </div>
+        `;
+    }
+    
+    if (examSubjectContainer) {
+        examSubjectContainer.innerHTML = `
+            <label>Select Subjects:</label>
+            <div id="examSubjects" class="multi-select-container">
+                <!-- Will be populated with checkboxes -->
+            </div>
+        `;
+    }
+}
+
+function setupTimeSelector() {
+    // Add time selectors for practice and exam
+    const practiceSetup = document.querySelector('.practice-setup');
+    const examSetup = document.querySelector('.exam-setup');
+    
+    if (practiceSetup) {
+        const timeGroup = document.createElement('div');
+        timeGroup.className = 'form-group';
+        timeGroup.innerHTML = `
+            <label>Time Limit (minutes):</label>
+            <select id="practiceTime">
+                <option value="30">30 minutes</option>
+                <option value="60" selected>60 minutes</option>
+                <option value="90">90 minutes</option>
+                <option value="120">120 minutes</option>
+                <option value="0">No time limit</option>
+            </select>
+        `;
+        practiceSetup.insertBefore(timeGroup, practiceSetup.lastElementChild);
+    }
+    
+    if (examSetup) {
+        const timeGroup = document.createElement('div');
+        timeGroup.className = 'form-group';
+        timeGroup.innerHTML = `
+            <label>Time Limit (minutes):</label>
+            <select id="examTime">
+                <option value="60">60 minutes</option>
+                <option value="90">90 minutes</option>
+                <option value="120" selected>120 minutes</option>
+                <option value="150">150 minutes</option>
+                <option value="180">180 minutes</option>
+            </select>
+        `;
+        examSetup.insertBefore(timeGroup, examSetup.lastElementChild);
+    }
 }
 
 function switchTab(tabName) {
@@ -159,6 +224,12 @@ function switchTab(tabName) {
         case 'subjects':
             loadSubjects();
             break;
+        case 'practice':
+            loadSubjects();
+            break;
+        case 'exam':
+            loadSubjects();
+            break;
         case 'results':
             loadResults();
             break;
@@ -188,8 +259,8 @@ async function loadOverviewData() {
             const data = await response.json();
             
             // Update stats
-            document.getElementById('totalExams').textContent = data.totalExams;
-            document.getElementById('avgScore').textContent = `${data.avgScore}%`;
+            document.getElementById('totalExams').textContent = data.totalExams || 0;
+            document.getElementById('avgScore').textContent = `${data.avgScore || 0}%`;
             document.getElementById('totalSubjects').textContent = subjects.length;
             
             // Find best score
@@ -201,6 +272,12 @@ async function loadOverviewData() {
             
             // Load recent results
             loadRecentActivity(data.recentResults);
+        } else {
+            // Set default values if request fails
+            document.getElementById('totalExams').textContent = '0';
+            document.getElementById('avgScore').textContent = '0%';
+            document.getElementById('totalSubjects').textContent = subjects.length;
+            document.getElementById('bestScore').textContent = '0%';
         }
     } catch (error) {
         console.error('Error loading overview data:', error);
@@ -218,7 +295,7 @@ function loadRecentActivity(recentResults) {
     recentResultsContainer.innerHTML = recentResults.slice(0, 5).map(result => `
         <div class="activity-item">
             <div class="activity-info">
-                <h4>${result.subject.name} Exam</h4>
+                <h4>${result.subject.name} ${result.examType}</h4>
                 <p>Score: ${result.score}% | ${new Date(result.completedAt).toLocaleDateString()}</p>
             </div>
         </div>
@@ -231,22 +308,31 @@ async function loadSubjects() {
         
         if (response.ok) {
             const data = await response.json();
-            subjects = data.subjects;
+            subjects = data.subjects || [];
             
             // Update subjects page
             displaySubjects();
             
-            // Update dropdown menus
-            updateSubjectDropdowns();
+            // Update dropdown menus and multi-select
+            updateSubjectSelectors();
+        } else {
+            console.error('Failed to load subjects');
+            subjects = [];
         }
     } catch (error) {
         console.error('Error loading subjects:', error);
+        subjects = [];
     }
 }
 
 function displaySubjects() {
     const subjectsList = document.getElementById('subjectsList');
     if (!subjectsList) return;
+    
+    if (subjects.length === 0) {
+        subjectsList.innerHTML = '<p>No subjects available. Contact admin to add subjects.</p>';
+        return;
+    }
     
     subjectsList.innerHTML = subjects.map(subject => `
         <div class="subject-card">
@@ -261,16 +347,75 @@ function displaySubjects() {
     `).join('');
 }
 
-function updateSubjectDropdowns() {
-    const dropdowns = ['practiceSubject', 'examSubject'];
+function updateSubjectSelectors() {
+    // Update multi-select containers
+    const practiceSubjects = document.getElementById('practiceSubjects');
+    const examSubjects = document.getElementById('examSubjects');
     
-    dropdowns.forEach(dropdownId => {
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown) {
-            dropdown.innerHTML = '<option value="">Choose a subject...</option>' + 
-                subjects.map(subject => `<option value="${subject._id}">${subject.name}</option>`).join('');
+    if (practiceSubjects) {
+        practiceSubjects.innerHTML = subjects.map(subject => `
+            <div class="subject-checkbox">
+                <input type="checkbox" id="practice_${subject._id}" value="${subject._id}" class="practice-subject-checkbox">
+                <label for="practice_${subject._id}">${subject.name}</label>
+            </div>
+        `).join('');
+        
+        // Add event listeners
+        document.querySelectorAll('.practice-subject-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updatePracticeYears);
+        });
+    }
+    
+    if (examSubjects) {
+        examSubjects.innerHTML = subjects.map(subject => `
+            <div class="subject-checkbox">
+                <input type="checkbox" id="exam_${subject._id}" value="${subject._id}" class="exam-subject-checkbox">
+                <label for="exam_${subject._id}">${subject.name}</label>
+            </div>
+        `).join('');
+        
+        // Add event listeners
+        document.querySelectorAll('.exam-subject-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateExamYears);
+        });
+    }
+}
+
+function updatePracticeYears() {
+    const selectedSubjects = Array.from(document.querySelectorAll('.practice-subject-checkbox:checked')).map(cb => cb.value);
+    if (selectedSubjects.length > 0) {
+        loadYearsForMultipleSubjects(selectedSubjects, 'practiceYear');
+    }
+}
+
+function updateExamYears() {
+    const selectedSubjects = Array.from(document.querySelectorAll('.exam-subject-checkbox:checked')).map(cb => cb.value);
+    if (selectedSubjects.length > 0) {
+        loadYearsForMultipleSubjects(selectedSubjects, 'examYear');
+    }
+}
+
+async function loadYearsForMultipleSubjects(subjectIds, yearDropdownId) {
+    try {
+        const allYears = new Set();
+        
+        for (const subjectId of subjectIds) {
+            const response = await fetch(`/api/questions/${subjectId}/years`);
+            if (response.ok) {
+                const data = await response.json();
+                data.years.forEach(year => allYears.add(year));
+            }
         }
-    });
+        
+        const yearDropdown = document.getElementById(yearDropdownId);
+        if (yearDropdown) {
+            const sortedYears = Array.from(allYears).sort((a, b) => b - a);
+            yearDropdown.innerHTML = '<option value="">Choose a year...</option>' + 
+                sortedYears.map(year => `<option value="${year}">${year}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading years for multiple subjects:', error);
+    }
 }
 
 async function loadYears(subjectId, yearDropdownId) {
@@ -317,11 +462,11 @@ function selectSubjectForPractice(subjectId, subjectName) {
     // Switch to practice tab
     switchTab('practice');
     
-    // Set the subject
-    const practiceSubject = document.getElementById('practiceSubject');
-    if (practiceSubject) {
-        practiceSubject.value = subjectId;
-        loadYears(subjectId, 'practiceYear');
+    // Select the subject checkbox
+    const checkbox = document.getElementById(`practice_${subjectId}`);
+    if (checkbox) {
+        checkbox.checked = true;
+        updatePracticeYears();
     }
 }
 
@@ -329,57 +474,61 @@ function selectSubjectForExam(subjectId, subjectName) {
     // Switch to exam tab
     switchTab('exam');
     
-    // Set the subject
-    const examSubject = document.getElementById('examSubject');
-    if (examSubject) {
-        examSubject.value = subjectId;
-        loadYears(subjectId, 'examYear');
+    // Select the subject checkbox
+    const checkbox = document.getElementById(`exam_${subjectId}`);
+    if (checkbox) {
+        checkbox.checked = true;
+        updateExamYears();
     }
 }
 
 async function startPractice() {
-    const subjectId = document.getElementById('practiceSubject').value;
+    const selectedSubjects = Array.from(document.querySelectorAll('.practice-subject-checkbox:checked')).map(cb => cb.value);
     const year = document.getElementById('practiceYear').value;
-    const topic = document.getElementById('practiceTopic').value;
+    const topic = document.getElementById('practiceTopic') ? document.getElementById('practiceTopic').value : '';
     const questionCount = document.getElementById('practiceQuestions').value;
+    const timeLimit = document.getElementById('practiceTime').value;
     
-    if (!subjectId || !year) {
-        alert('Please select a subject and year');
+    if (selectedSubjects.length === 0 || !year) {
+        alert('Please select at least one subject and a year');
         return;
     }
     
     // Store practice settings
     const practiceData = {
         type: 'practice',
-        subjectId,
+        subjects: selectedSubjects,
         year,
         topic,
-        questionCount
+        questionCount,
+        timeLimit: parseInt(timeLimit) * 60 // Convert to seconds
     };
     
     localStorage.setItem('examData', JSON.stringify(practiceData));
-    window.location.href = '/exam';
+    window.location.href = '/exam.html';
 }
 
 async function startExam() {
-    const subjectId = document.getElementById('examSubject').value;
+    const selectedSubjects = Array.from(document.querySelectorAll('.exam-subject-checkbox:checked')).map(cb => cb.value);
     const year = document.getElementById('examYear').value;
+    const timeLimit = document.getElementById('examTime').value;
     
-    if (!subjectId || !year) {
-        alert('Please select a subject and year');
+    if (selectedSubjects.length === 0 || !year) {
+        alert('Please select at least one subject and a year');
         return;
     }
     
     // Store exam settings
     const examData = {
         type: 'exam',
-        subjectId,
+        subjects: selectedSubjects,
         year,
-        questionCount: 40
+        questionCount: 40,
+        timeLimit: parseInt(timeLimit) * 60 // Convert to seconds
     };
     
     localStorage.setItem('examData', JSON.stringify(examData));
-    window.location.href = '/exam';
+    window.location.href = '/exam.html';
 }
 
 async function loadResults() {
@@ -394,9 +543,13 @@ async function loadResults() {
         if (response.ok) {
             const data = await response.json();
             displayResults(data.results);
+        } else {
+            console.error('Failed to load results');
+            displayResults([]);
         }
     } catch (error) {
         console.error('Error loading results:', error);
+        displayResults([]);
     }
 }
 
@@ -431,7 +584,7 @@ function getScoreClass(score) {
 
 function viewResultDetail(resultId) {
     localStorage.setItem('resultId', resultId);
-    window.location.href = '/results';
+    window.location.href = '/results.html';
 }
 
 async function activateAccount() {

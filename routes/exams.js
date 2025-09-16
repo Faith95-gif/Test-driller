@@ -9,13 +9,16 @@ const router = express.Router();
 router.post('/submit', auth, async (req, res) => {
     try {
         const {
-            subject,
+            subjects,
             examType,
             year,
             answers,
             timeUsed
         } = req.body;
 
+        // Handle both single subject (backward compatibility) and multiple subjects
+        const subjectIds = Array.isArray(subjects) ? subjects : [subjects || subject];
+        
         // Get questions with correct answers
         const questionIds = answers.map(answer => answer.questionId);
         const questions = await Question.find({ _id: { $in: questionIds } });
@@ -41,25 +44,68 @@ router.post('/submit', auth, async (req, res) => {
 
         const score = Math.round((correctAnswers / questions.length) * 100);
 
-        // Save exam result
-        const examResult = new ExamResult({
-            user: req.user.userId,
-            subject,
-            examType,
-            year,
-            questions: examQuestions,
-            totalQuestions: questions.length,
-            correctAnswers,
-            score,
-            timeUsed
-        });
+        // For multiple subjects, create separate results for each subject
+        const results = [];
+        
+        if (subjectIds.length === 1) {
+            // Single subject
+            const examResult = new ExamResult({
+                user: req.user.userId,
+                subject: subjectIds[0],
+                examType,
+                year,
+                questions: examQuestions,
+                totalQuestions: questions.length,
+                correctAnswers,
+                score,
+                timeUsed
+            });
+            
+            await examResult.save();
+            results.push(examResult);
+        } else {
+            // Multiple subjects - group questions by subject
+            const questionsBySubject = {};
+            
+            examQuestions.forEach(eq => {
+                const question = questions.find(q => q._id.toString() === eq.question.toString());
+                const subjectId = question.subject.toString();
+                
+                if (!questionsBySubject[subjectId]) {
+                    questionsBySubject[subjectId] = [];
+                }
+                questionsBySubject[subjectId].push(eq);
+            });
+            
+            // Create result for each subject
+            for (const [subjectId, subjectQuestions] of Object.entries(questionsBySubject)) {
+                const subjectCorrect = subjectQuestions.filter(q => q.isCorrect).length;
+                const subjectScore = Math.round((subjectCorrect / subjectQuestions.length) * 100);
+                
+                const examResult = new ExamResult({
+                    user: req.user.userId,
+                    subject: subjectId,
+                    examType,
+                    year,
+                    questions: subjectQuestions,
+                    totalQuestions: subjectQuestions.length,
+                    correctAnswers: subjectCorrect,
+                    score: subjectScore,
+                    timeUsed: Math.round(timeUsed / subjectIds.length) // Distribute time evenly
+                });
+                
+                await examResult.save();
+                results.push(examResult);
+            }
+        }
 
-        await examResult.save();
+        // Return the first result (or combined result for multiple subjects)
+        const mainResult = results[0];
 
         res.json({
             message: 'Exam submitted successfully',
             result: {
-                id: examResult._id,
+                id: mainResult._id,
                 score,
                 correctAnswers,
                 totalQuestions: questions.length,
